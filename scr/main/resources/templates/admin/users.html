@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý người dùng - Quản trị</title>
+
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+
+    <style>
+        .admin-users-shell {
+            padding: 1.5rem 0 3rem;
+        }
+
+        .metric-card-soft {
+            padding: 1.5rem;
+            border-radius: 24px;
+            color: #fff;
+            box-shadow: 0 18px 40px rgba(20, 42, 82, 0.12);
+        }
+
+        .metric-card-soft h6 {
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.82rem;
+            opacity: 0.9;
+        }
+
+        .metric-card-soft small {
+            opacity: 0.88;
+        }
+
+        .metric-card-soft.primary {
+            background: linear-gradient(135deg, #1f6feb 0%, #1354bd 100%);
+        }
+
+        .metric-card-soft.success {
+            background: linear-gradient(135deg, #21925b 0%, #157347 100%);
+        }
+
+        .metric-card-soft.info {
+            background: linear-gradient(135deg, #28b8d8 0%, #1493b1 100%);
+        }
+
+        .users-table-shell {
+            overflow: hidden;
+        }
+
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .user-card {
+            padding: 1.35rem;
+            border-radius: 24px;
+            border: 1px solid rgba(23, 76, 70, 0.1);
+            background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(249, 246, 239, 0.98) 100%);
+            box-shadow: 0 12px 30px rgba(22, 42, 38, 0.08);
+        }
+
+        .user-card-top {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .user-id-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(31, 111, 235, 0.12);
+            color: #1354bd;
+            font-weight: 800;
+        }
+
+        .user-login-meta {
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .user-login-meta strong {
+            font-size: 1.1rem;
+            color: #12322d;
+        }
+
+        .login-subtitle {
+            color: #6d7b78;
+            font-size: 0.92rem;
+        }
+
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .user-info-box {
+            padding: 0.9rem 1rem;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.75);
+            border: 1px solid rgba(23, 76, 70, 0.08);
+        }
+
+        .user-info-box .meta-label {
+            margin-bottom: 0.35rem;
+        }
+
+        .user-info-box strong,
+        .user-info-box span {
+            color: #243d39;
+            overflow-wrap: anywhere;
+        }
+
+        .users-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .users-table th,
+        .users-table td {
+            word-wrap: break-word;
+        }
+
+        .user-cell {
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .provider-pill,
+        .role-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.38rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .provider-pill.local {
+            background: rgba(100, 116, 139, 0.14);
+            color: #475569;
+        }
+
+        .provider-pill.oauth {
+            background: rgba(8, 145, 178, 0.14);
+            color: #0f766e;
+        }
+
+        .role-stack,
+        .action-stack,
+        .toggle-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+
+        .toggle-stack form {
+            margin: 0;
+        }
+
+        .toggle-stack .btn,
+        .action-stack .btn {
+            border-radius: 999px;
+        }
+
+        .users-table td:last-child {
+            min-width: 220px;
+        }
+
+        @media (max-width: 991.98px) {
+            .user-grid,
+            .user-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body class="site-shell d-flex flex-column min-vh-100">
+
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-fill page-shell">
+
+<div class="container admin-users-shell">
+    <div class="headline-block mb-4">
+        <div>
+            <h1 class="section-title d-flex align-items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
+                    <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8Zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022ZM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816ZM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/>
+                </svg>
+                Quản lý người dùng
+            </h1>
+            <p class="section-lead mt-2 mb-0">Theo dõi tài khoản, nguồn đăng nhập và điều chỉnh vai trò trong một bảng quản trị gọn hơn, không bị tràn ngang.</p>
+        </div>
+        <nav aria-label="đường dẫn điều hướng">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/dashboard">Bảng điều khiển</a></li>
+                <li class="breadcrumb-item active">Người dùng</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Alert for errors -->
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" th:if="${param.error}">
+        <strong>Lỗi!</strong> Không thể gỡ vai trò quản trị khỏi tài khoản quản trị chính.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="metric-card-soft primary">
+                    <h6 class="text-uppercase mb-1">Tổng người dùng</h6>
+                    <h2 class="mb-0" th:text="${#lists.size(users)}">0</h2>
+                    <small>Tài khoản đã đăng ký</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card-soft success">
+                    <h6 class="text-uppercase mb-1">Quản trị viên</h6>
+                    <h2 class="mb-0" th:text="${adminCount}">0</h2>
+                    <small>Có quyền quản trị</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card-soft info">
+                    <h6 class="text-uppercase mb-1">Người dùng thường</h6>
+                    <h2 class="mb-0" th:text="${regularUserCount}">0</h2>
+                    <small>Tài khoản tiêu chuẩn</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-shell users-table-shell">
+        <div class="headline-block mb-3">
+            <div>
+                <h3 class="mb-1 d-flex align-items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                        </svg>
+                        Tất cả người dùng (<span th:text="${#lists.size(users)}">0</span>)
+                </h3>
+                <p class="muted-copy mb-0">Hiển thị từng tài khoản dưới dạng card để không mất dữ liệu ở các cột vai trò, nhà cung cấp và thao tác.</p>
+            </div>
+        </div>
+        <div class="user-grid">
+            <article class="user-card" th:each="user : ${users}">
+                <div class="user-card-top">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="user-id-chip" th:text="${user.id}">1</div>
+                        <div class="user-login-meta">
+                            <strong th:text="${user.username} ?: 'Chưa có tên đăng nhập'">username</strong>
+                            <span class="login-subtitle">Thông tin đăng nhập</span>
+                            <span class="badge bg-warning text-dark align-self-start" th:if="${user.username == 'hutech'}">QUẢN TRỊ CHÍNH</span>
+                        </div>
+                    </div>
+                    <span class="provider-pill"
+                          th:classappend="${user.provider == null or user.provider == 'Local'} ? ' local' : ' oauth'"
+                          th:text="${user.provider == null ? 'Tài khoản hệ thống' : (providerLabels[user.provider] != null ? providerLabels[user.provider] : user.provider)}">Tài khoản hệ thống</span>
+                </div>
+
+                <div class="user-info-grid">
+                    <div class="user-info-box">
+                        <div class="meta-label">Email</div>
+                        <strong th:text="${user.email != null ? user.email : 'Không có email'}">email@example.com</strong>
+                    </div>
+                    <div class="user-info-box">
+                        <div class="meta-label">Số điện thoại</div>
+                        <strong th:text="${user.phone != null ? user.phone : 'Không có'}">Không có</strong>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="meta-label mb-2">Vai trò hiện tại</div>
+                    <div class="role-stack" th:if="${not #sets.isEmpty(user.roles)}">
+                        <span th:each="role : ${user.roles}"
+                              class="role-pill"
+                              th:classappend="${role.name == 'ADMIN'} ? ' text-bg-danger' : ' text-bg-success'"
+                              th:text="${roleLabels[role.name] != null ? roleLabels[role.name] : role.name}">Vai trò</span>
+                    </div>
+                    <div class="role-stack" th:if="${#sets.isEmpty(user.roles)}">
+                        <span class="role-pill text-bg-secondary">Chưa phân quyền</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="meta-label mb-2">Cập nhật quyền</div>
+                    <div class="toggle-stack">
+                        <form th:each="role : ${roles}"
+                              th:action="@{/admin/users/toggle-role/{userId}/{roleId}(userId=${user.id}, roleId=${role.id})}"
+                              method="post"
+                              class="d-inline">
+                            <button type="submit"
+                                    class="btn btn-sm"
+                                    th:classappend="${user.roles.contains(role) ? 'btn-success' : 'btn-outline-secondary'}"
+                                    th:title="${user.roles.contains(role) ? 'Gỡ ' + (roleLabels[role.name] != null ? roleLabels[role.name] : role.name) : 'Thêm ' + (roleLabels[role.name] != null ? roleLabels[role.name] : role.name)}">
+                                <span th:text="${roleLabels[role.name] != null ? roleLabels[role.name] : role.name}">Vai trò</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="action-stack">
+                    <a th:if="${user.username != 'hutech'}"
+                       th:href="@{/admin/users/delete/{id}(id=${user.id})}"
+                       class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('Bạn có chắc muốn xóa người dùng này?')">
+                        Xóa tài khoản
+                    </a>
+                    <button th:if="${user.username == 'hutech'}"
+                            class="btn btn-sm btn-outline-danger disabled"
+                            disabled
+                            title="Không thể xóa quản trị chính">
+                        Xóa tài khoản
+                    </button>
+                </div>
+            </article>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+<script th:src="@{/js/bootstrap.min.js}"></script>
+
+</body>
+</html>

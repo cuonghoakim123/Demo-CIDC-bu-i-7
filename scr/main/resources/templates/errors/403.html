@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initialscale=1.0">
+
+    <title>Từ chối truy cập</title>
+
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+</head>
+
+<body class="site-shell d-flex flex-column min-vh-100">
+
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-fill error-shell">
+    <div class="container">
+        <div class="section-panel error-card mx-auto" style="max-width: 760px;">
+            <div class="error-code fw-bold">403</div>
+            <h1 class="error-title mb-3">Từ chối truy cập</h1>
+            <p class="auth-copy mb-4">Tài khoản hiện tại không có quyền truy cập vào khu vực này. Hãy quay lại trang chủ hoặc đăng nhập bằng tài khoản có phân quyền phù hợp.</p>
+            <div class="stack-actions justify-content-center">
+                <a href="/" class="btn btn-primary">Về trang chủ</a>
+                <a href="/login" class="btn btn-outline-primary">Đăng nhập</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+</body>
+</html>

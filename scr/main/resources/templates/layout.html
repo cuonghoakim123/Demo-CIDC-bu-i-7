@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiệu sách HUTECH</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link th:fragment="link-css"
+          rel="stylesheet"
+          th:href="@{/css/bootstrap.min.css}">
+
+    <link th:fragment="custom-css"
+          rel="stylesheet"
+          th:href="@{/css/style.css}">
+</head>
+
+<body class="site-shell d-flex flex-column min-vh-100">
+
+<header th:fragment="header" class="site-header">
+    <div class="announcement-bar">
+        <div class="container d-flex flex-wrap justify-content-between gap-2 small">
+            <span>Hiệu sách HUTECH dành cho sinh viên với giao diện hiện đại và trải nghiệm mua sách nhanh gọn.</span>
+            <span>Hỗ trợ đơn hàng, bảng điều khiển và quản trị người dùng trên cùng một hệ thống.</span>
+        </div>
+    </div>
+
+    <div class="container py-3">
+        <nav class="navbar navbar-expand-xl glass-nav px-3 px-lg-4 py-3">
+            <a class="navbar-brand d-flex align-items-center gap-3" href="/">
+                <img class="brand-logo"
+                     src="https://upload.wikimedia.org/wikipedia/vi/8/81/Logo_Tr%C6%B0%E1%BB%9Dng_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_C%C3%B4ng_ngh%E1%BB%87_Th%C3%A0nh_ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh.png"
+                     alt="Biểu trưng HUTECH">
+                <span>
+                    <strong>Hiệu sách HUTECH</strong>
+                    <small>Hiệu sách học thuật hiện đại</small>
+                </span>
+            </a>
+
+            <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Chuyển đổi điều hướng">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav nav-pills-wrap me-auto mb-3 mb-xl-0">
+                    <li class="nav-item"><a class="nav-link" href="/">Trang chủ</a></li>
+                    <li class="nav-item" sec:authorize="hasAnyAuthority('ADMIN', 'USER')"><a class="nav-link" href="/books">Sách</a></li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ADMIN')"><a class="nav-link" href="/books/add">Thêm sách</a></li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ADMIN')"><a class="nav-link" href="/dashboard">Bảng điều khiển</a></li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ADMIN')"><a class="nav-link" href="/orders/admin/all">Đơn hàng</a></li>
+                    <li class="nav-item" sec:authorize="hasAuthority('ADMIN')"><a class="nav-link" href="/admin/users">Người dùng</a></li>
+                    <li class="nav-item" sec:authorize="hasAuthority('USER') and !hasAuthority('ADMIN')"><a class="nav-link" href="/orders">Đơn hàng của tôi</a></li>
+                    <li class="nav-item" sec:authorize="hasAuthority('USER') and !hasAuthority('ADMIN')"><a class="nav-link" href="/cart">Giỏ hàng</a></li>
+                </ul>
+
+                <div class="navbar-actions ms-xl-3">
+                    <div class="user-chip" sec:authorize="isAuthenticated()">
+                        <span class="user-chip-label">Đã đăng nhập</span>
+                        <strong th:text="${currentUsername != null ? currentUsername : #authentication.name}">Người dùng</strong>
+                        <span class="badge rounded-pill text-bg-warning" sec:authorize="hasAuthority('ADMIN')">Quản trị</span>
+                        <span class="badge rounded-pill text-bg-secondary" sec:authorize="hasAuthority('USER') and !hasAuthority('ADMIN')">Người dùng</span>
+                    </div>
+                    <form th:action="@{/logout}" method="post" class="d-inline" sec:authorize="isAuthenticated()">
+                        <button class="btn btn-outline-light btn-soft" type="submit">Đăng xuất</button>
+                    </form>
+                    <a class="btn btn-outline-light btn-soft" href="/login" sec:authorize="!isAuthenticated()">Đăng nhập</a>
+                    <a class="btn btn-accent" href="/register" sec:authorize="!isAuthenticated()">Đăng ký</a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="pt-3" th:if="${successMessage != null}">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <strong>Thành công!</strong>
+            <span th:text="${successMessage}">Đã thêm sản phẩm vào giỏ hàng.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+    </div>
+    <div th:fragment="content"></div>
+</div>
+
+<footer th:fragment="footer" class="footer mt-auto py-4">
+    <div class="container">
+        <div class="footer-panel">
+            <div class="row gy-4 align-items-start">
+                <div class="col-lg-5">
+                    <div class="footer-brand d-flex align-items-center gap-3 mb-3">
+                        <img class="brand-logo"
+                             src="https://upload.wikimedia.org/wikipedia/vi/8/81/Logo_Tr%C6%B0%E1%BB%9Dng_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_C%C3%B4ng_ngh%E1%BB%87_Th%C3%A0nh_ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh.png"
+                             alt="Biểu trưng HUTECH">
+                        <div>
+                            <h6 class="mb-1">Hiệu sách HUTECH</h6>
+                            <p class="mb-0">Không gian mua sách trực tuyến cho sinh viên, độc giả và quản trị viên với bảng điều khiển rõ ràng.</p>
+                        </div>
+                    </div>
+                    <div class="footer-stats">
+                        <span>Danh mục chọn lọc</span>
+                        <span>Thanh toán nhanh</span>
+                        <span>Thống kê quản trị</span>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <h6 class="mb-3">Liên kết nhanh</h6>
+                    <div class="footer-links-grid">
+                        <a class="footer-link" href="/">Trang chủ</a>
+                        <a class="footer-link" href="/books">Sách</a>
+                        <a class="footer-link" href="/orders">Đơn hàng</a>
+                        <a class="footer-link" href="/cart">Giỏ hàng</a>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <h6 class="mb-3">Liên hệ</h6>
+                    <div class="footer-contact-list">
+                        <span>Email: support@bookstore.com</span>
+                        <span>Cơ sở: Đại học HUTECH</span>
+                        <span>Thực hiện: Nguyen Dai Kim Cuong</span>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="small d-flex flex-column flex-md-row justify-content-between gap-2">
+                <span>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> Nguyen Dai Kim Cuong - 2280605169</span>
+                <span>Phát triển bằng Spring Boot, Thymeleaf và giao diện bán sách tùy biến hoàn chỉnh.</span>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:src="@{/js/jquery-3.7.0.min.js}"></script>
+</footer>
+
+</body>
+</html>

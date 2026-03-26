@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Đặt hàng thành công - Hiệu sách HUTECH</title>
+
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+</head>
+
+<body class="site-shell d-flex flex-column min-vh-100">
+
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-fill page-shell">
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-xl-9 col-lg-10">
+            <div class="success-panel text-center mb-4">
+                <div class="success-icon mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="currentColor" class="bi bi-check2-circle text-success" viewBox="0 0 16 16">
+                        <path d="M2.5 8a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0Zm5.354 1.354 3-3a.5.5 0 0 0-.708-.708L7.5 8.293 6.354 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0Z"/>
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0ZM1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8Z"/>
+                    </svg>
+                </div>
+                <div class="eyebrow eyebrow-dark mb-3">Đơn hàng đã được xác nhận</div>
+                <h1 class="section-title mb-3">Bạn đã đặt hàng thành công</h1>
+                <p class="section-lead mb-0">Chúng tôi đã tiếp nhận đơn mua của bạn và tạo bản ghi xác nhận. Bạn có thể tiếp tục mua sắm trong khi chúng tôi chuẩn bị giao hàng.</p>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-7">
+                    <div class="summary-card h-100 text-start">
+                        <div class="headline-block mb-3">
+                            <div>
+                                <h3 class="mb-1">Chi tiết đơn hàng</h3>
+                                <p class="muted-copy mb-0">Thông tin chính cho lần mua này.</p>
+                            </div>
+                        </div>
+                        <div class="info-stack mb-4">
+                            <div class="info-row">
+                                <span class="meta-label mb-0">Mã đơn hàng</span>
+                                <strong th:text="${orderNumber}">ORD-20240207-001</strong>
+                            </div>
+                            <div class="info-row">
+                                <span class="meta-label mb-0">Ngày đặt</span>
+                                <strong th:text="${#dates.format(orderDate, 'dd/MM/yyyy HH:mm')}">07/02/2024 14:30</strong>
+                            </div>
+                            <div class="info-row">
+                                <span class="meta-label mb-0">Phương thức thanh toán</span>
+                                <strong th:text="${paymentLabels[paymentMethod] != null ? paymentLabels[paymentMethod] : paymentMethod}">Thanh toán khi nhận hàng</strong>
+                            </div>
+                            <div class="info-row">
+                                <span class="meta-label mb-0">Địa chỉ giao hàng</span>
+                                <strong class="text-end" th:text="${shippingAddress}">123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</strong>
+                            </div>
+                        </div>
+
+                        <div class="summary-total">
+                            <span class="meta-label mb-2">Tổng thanh toán</span>
+                            <div class="price-display" th:text="'$' + ${#numbers.formatDecimal(totalAmount, 0, 2)}">$99.99</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="summary-card h-100 text-start">
+                        <div class="headline-block mb-3">
+                            <div>
+                                <h3 class="mb-1">Sản phẩm đã đặt</h3>
+                                <p class="muted-copy mb-0">Các cuốn sách nằm trong hóa đơn này.</p>
+                            </div>
+                        </div>
+                        <div class="info-stack">
+                            <div class="info-row" th:each="item : ${orderItems}">
+                                <div>
+                                    <strong class="d-block" th:text="${item.bookName}">Tên sách</strong>
+                                    <span class="meta-label mb-0">Số lượng <span th:text="${item.quantity}">1</span></span>
+                                </div>
+                                <strong th:text="'$' + ${#numbers.formatDecimal(item.price * item.quantity, 0, 2)}">$19.99</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-card mb-4 text-center">
+                <div class="headline-block mb-4 justify-content-center">
+                    <div>
+                        <div class="eyebrow eyebrow-dark mb-2">Tiến trình giao hàng</div>
+                        <h3 class="mb-1">Các bước tiếp theo</h3>
+                    </div>
+                </div>
+                <div class="timeline-grid">
+                    <div class="timeline-step">
+                        <div class="status-icon mb-3 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-check2-circle" viewBox="0 0 16 16">
+                                <path d="M2.5 8a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0Zm5.354 1.354 3-3a.5.5 0 0 0-.708-.708L7.5 8.293 6.354 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0Z"/>
+                            </svg>
+                        </div>
+                        <h6>Đã đặt hàng</h6>
+                        <small class="text-muted">Ngay lập tức</small>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="status-icon mb-3 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16">
+                                <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6z"/>
+                            </svg>
+                        </div>
+                        <h6>Đang xử lý</h6>
+                        <small class="text-muted">1-2 ngày làm việc</small>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="status-icon mb-3 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-truck" viewBox="0 0 16 16">
+                                <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5v-7Z"/>
+                            </svg>
+                        </div>
+                        <h6>Đang giao</h6>
+                        <small class="text-muted">3-5 ngày làm việc</small>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="status-icon mb-3 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-house-door" viewBox="0 0 16 16">
+                                <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L8.354 1.146Z"/>
+                            </svg>
+                        </div>
+                        <h6>Đã giao</h6>
+                        <small class="text-muted">5-7 ngày làm việc</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stack-actions justify-content-center mb-4">
+                <a href="/books" class="btn btn-primary btn-lg">Tiếp tục mua sắm</a>
+                <a href="/" class="btn btn-outline-secondary btn-lg">Về trang chủ</a>
+            </div>
+
+            <div class="alert alert-info" role="alert">
+                <strong>Lưu ý xác nhận:</strong> Email tóm tắt kèm chi tiết đơn hàng và thông tin giao hàng đã được gửi đến địa chỉ email đăng ký của bạn.
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+</body>
+</html>

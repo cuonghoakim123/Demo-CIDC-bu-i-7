@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết sách - Hiệu sách HUTECH</title>
+
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+    
+    <style>
+        .detail-shell {
+            padding: 2rem 0 4rem;
+        }
+        .detail-hero {
+            background:
+                radial-gradient(circle at top left, rgba(13, 110, 253, 0.16), transparent 32%),
+                radial-gradient(circle at bottom right, rgba(255, 193, 7, 0.18), transparent 26%),
+                linear-gradient(135deg, #ffffff 0%, #f6f9ff 100%);
+            border: 1px solid rgba(13, 110, 253, 0.08);
+            border-radius: 32px;
+            box-shadow: 0 28px 60px rgba(12, 36, 78, 0.12);
+            overflow: hidden;
+        }
+        .cover-panel {
+            height: 100%;
+            padding: 2rem;
+            background: linear-gradient(180deg, #eef4ff 0%, #ffffff 100%);
+            border-right: 1px solid rgba(13, 110, 253, 0.08);
+        }
+        .cover-frame {
+            position: relative;
+            min-height: 520px;
+            border-radius: 28px;
+            overflow: hidden;
+            background: linear-gradient(160deg, #dfe9ff 0%, #f8fbff 55%, #ffffff 100%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 24px 50px rgba(48, 84, 150, 0.16);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .cover-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: #33558c;
+            padding: 2rem;
+            text-align: center;
+        }
+        .cover-fallback svg {
+            opacity: 0.9;
+        }
+        .cover-caption {
+            margin-top: 1rem;
+            padding: 1rem 1.1rem;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(13, 110, 253, 0.08);
+            color: #4a5a78;
+        }
+        .detail-content {
+            padding: 2.25rem;
+        }
+        .detail-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.9rem;
+            border-radius: 999px;
+            background: rgba(13, 110, 253, 0.1);
+            color: #0d4da5;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .detail-title {
+            font-size: clamp(2rem, 3vw, 3rem);
+            line-height: 1.1;
+            margin: 1rem 0 0.85rem;
+            color: #11284f;
+        }
+        .detail-lead {
+            font-size: 1.02rem;
+            line-height: 1.7;
+            color: #53627e;
+            max-width: 56ch;
+        }
+        .detail-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin: 1.75rem 0;
+        }
+        .meta-card {
+            padding: 1rem 1.1rem;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.86);
+            border: 1px solid rgba(17, 40, 79, 0.08);
+        }
+        .meta-label {
+            display: block;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #7f8ca3;
+            margin-bottom: 0.35rem;
+        }
+        .meta-value {
+            color: #172c52;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .price-display {
+            font-size: clamp(2.1rem, 4vw, 3.3rem);
+            font-weight: 800;
+            color: #d63384;
+            line-height: 1;
+        }
+        .purchase-panel {
+            margin-top: 1.5rem;
+            padding: 1.35rem;
+            border-radius: 24px;
+            background: linear-gradient(145deg, #0f274d 0%, #173b74 100%);
+            color: #fff;
+            box-shadow: 0 20px 50px rgba(17, 40, 79, 0.22);
+        }
+        .purchase-note {
+            color: rgba(255,255,255,0.78);
+            margin-bottom: 1rem;
+        }
+        .quantity-selector {
+            max-width: 170px;
+            border-radius: 16px;
+        }
+        .feature-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.9rem;
+            margin-top: 1rem;
+        }
+        .feature-chip {
+            padding: 0.95rem 1rem;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
+        }
+        .feature-chip strong {
+            display: block;
+            font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+        }
+        .feature-chip span {
+            display: block;
+            color: rgba(255,255,255,0.72);
+            font-size: 0.9rem;
+        }
+        .detail-sections {
+            margin-top: 1.75rem;
+            display: grid;
+            gap: 1.25rem;
+        }
+        .info-panel {
+            padding: 1.5rem;
+            border-radius: 24px;
+            background: #fff;
+            border: 1px solid rgba(17, 40, 79, 0.08);
+            box-shadow: 0 18px 40px rgba(17, 40, 79, 0.08);
+        }
+        .info-panel h3 {
+            color: #142a52;
+            margin-bottom: 0.85rem;
+        }
+        .description-copy {
+            white-space: pre-line;
+            color: #53627e;
+            line-height: 1.8;
+            margin-bottom: 0;
+        }
+        .admin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        @media (max-width: 991.98px) {
+            .cover-panel {
+                border-right: 0;
+                border-bottom: 1px solid rgba(13, 110, 253, 0.08);
+            }
+            .cover-frame {
+                min-height: 420px;
+            }
+        }
+        @media (max-width: 767.98px) {
+            .detail-shell {
+                padding-top: 1.25rem;
+            }
+            .detail-content,
+            .cover-panel {
+                padding: 1.25rem;
+            }
+            .detail-meta-grid,
+            .feature-strip {
+                grid-template-columns: 1fr;
+            }
+            .cover-frame {
+                min-height: 320px;
+            }
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-fill">
+    <section class="detail-shell">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <nav aria-label="đường dẫn điều hướng">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                            <li class="breadcrumb-item"><a href="/books">Sách</a></li>
+                            <li class="breadcrumb-item active" th:text="${book.title}">Tên sách</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="detail-hero row g-0">
+                <div class="col-lg-5">
+                    <div class="cover-panel">
+                        <div class="cover-frame">
+                            <img class="cover-image"
+                                 th:if="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)}"
+                                 th:src="${book.imageUrl}"
+                                 th:alt="${'Bìa sách ' + book.title}"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="cover-fallback" th:style="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)} ? 'display:none;' : 'display:flex;'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" fill="currentColor" class="bi bi-book-half" viewBox="0 0 16 16">
+                                    <path d="M8.5 2.687v9.646c.683-.437 1.924-.52 3.055-.405 1.054.106 2.084.385 2.945.724V2.828c-.745-.31-1.999-.692-3.112-.804C10.198 1.905 9.125 2.05 8.5 2.687"/>
+                                    <path d="M8 1.783C7.015.936 5.587.81 4.287.94 2.773 1.092 1.245 1.611.293 2.044A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455C14.755 1.612 13.227 1.093 11.713.94 10.413.809 8.985.936 8 1.783M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5 9.605V2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492"/>
+                                </svg>
+                                <div>
+                                    <strong class="d-block fs-5 mb-2">Chưa có ảnh bìa</strong>
+                                    <span>Hãy cập nhật đường dẫn ảnh trong phần quản trị để hiển thị bìa sách nổi bật hơn.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cover-caption">
+                            <span class="badge bg-primary-subtle text-primary-emphasis mb-2"
+                                  th:text="${categoryLabels[book.category.name] != null ? categoryLabels[book.category.name] : book.category.name}">Danh mục</span>
+                            <div class="fw-semibold" th:text="${book.author}">Tên tác giả</div>
+                            <div class="small">Hiển thị bìa thật nếu sách đã có đường dẫn ảnh, đồng thời luôn có khối dự phòng nếu ảnh bị lỗi.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="detail-content">
+                        <span class="detail-kicker">Ấn phẩm nổi bật</span>
+                        <h1 class="detail-title" th:text="${book.title}">Tên sách</h1>
+                        <p class="detail-lead"
+                                    th:text="${book.description != null and !#strings.isEmpty(book.description) ? #strings.abbreviate(book.description, 220) : 'Cuốn sách này hiện đã có thông tin cơ bản. Bạn có thể bổ sung phần mô tả chi tiết từ trang quản trị để nội dung hiển thị đầy đủ hơn.'}">
+                            Mô tả ngắn của sách.
+                        </p>
+
+                        <div class="detail-meta-grid">
+                            <div class="meta-card">
+                                <span class="meta-label">Tác giả</span>
+                                <div class="meta-value" th:text="${book.author}">Tên tác giả</div>
+                            </div>
+                            <div class="meta-card">
+                                <span class="meta-label">Mã sách</span>
+                                <div class="meta-value">#<span th:text="${book.id}">1</span></div>
+                            </div>
+                            <div class="meta-card">
+                                <span class="meta-label">Danh mục</span>
+                                <div class="meta-value" th:text="${categoryLabels[book.category.name] != null ? categoryLabels[book.category.name] : book.category.name}">Danh mục</div>
+                            </div>
+                            <div class="meta-card">
+                                <span class="meta-label">Mức giá</span>
+                                <div class="meta-value">Học tập và tham khảo</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-end justify-content-between flex-wrap gap-3">
+                            <div>
+                                <span class="meta-label">Giá bán</span>
+                                <div class="price-display" th:text="'$' + ${#numbers.formatDecimal(book.price, 0, 2)}">$19.99</div>
+                            </div>
+                            <a class="btn btn-outline-secondary btn-lg" th:href="@{/books}">Quay lại danh sách</a>
+                        </div>
+
+                        <div class="purchase-panel mt-4" sec:authorize="hasAnyAuthority('ADMIN', 'USER')">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <h3 class="h4 mb-2">Thêm sách vào giỏ ngay</h3>
+                                    <p class="purchase-note mb-0">Chọn số lượng phù hợp, lưu vào giỏ và tiếp tục thanh toán khi bạn sẵn sàng.</p>
+                                </div>
+                                <span class="badge text-bg-light">Có thể đặt ngay</span>
+                            </div>
+
+                            <form th:action="@{/books/add-to-cart}" method="post" class="mt-4">
+                                <input type="hidden" name="id" th:value="${book.id}">
+                                <input type="hidden" name="name" th:value="${book.title}">
+                                <input type="hidden" name="price" th:value="${book.price}">
+
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-4">
+                                        <label for="quantity" class="form-label fw-semibold">Số lượng</label>
+                                        <input type="number"
+                                               class="form-control form-control-lg quantity-selector"
+                                               id="quantity"
+                                               name="quantity"
+                                               value="1"
+                                               min="1"
+                                               max="100">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <button type="submit" class="btn btn-warning btn-lg w-100 fw-semibold">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart-plus me-1" viewBox="0 0 16 16">
+                                                <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z"/>
+                                                <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                            </svg>
+                                            Thêm vào giỏ hàng
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="feature-strip">
+                                <div class="feature-chip">
+                                    <strong>Mua nhanh</strong>
+                                    <span>Thêm trực tiếp vào giỏ từ trang chi tiết.</span>
+                                </div>
+                                <div class="feature-chip">
+                                    <strong>Theo dõi đơn</strong>
+                                    <span>Kiểm tra trạng thái sau khi thanh toán.</span>
+                                </div>
+                                <div class="feature-chip">
+                                    <strong>Quản lý rõ ràng</strong>
+                                    <span>Admin có thể chỉnh sửa nội dung ngay tại đây.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div sec:authorize="!isAuthenticated()" class="alert alert-warning mt-4 rounded-4 border-0 shadow-sm">
+                            Vui lòng <a href="/login" class="alert-link">đăng nhập</a> để thêm sách vào giỏ hàng và thanh toán.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-sections">
+                <div class="info-panel">
+                    <h3>Nội dung chi tiết</h3>
+                    <p class="description-copy"
+                       th:text="${book.description != null and !#strings.isEmpty(book.description) ? book.description : 'Sách hiện chưa có phần giới thiệu chi tiết. Quản trị viên có thể cập nhật mô tả để hiển thị đầy đủ nội dung, điểm nổi bật và định hướng phù hợp cho người đọc.'}">
+                        Nội dung chi tiết của sách.
+                    </p>
+                </div>
+
+                <div class="info-panel">
+                    <h3>Thông tin nhanh</h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="meta-card h-100">
+                                <span class="meta-label">Trạng thái hiển thị</span>
+                                <div class="meta-value">Sẵn sàng giới thiệu</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="meta-card h-100">
+                                <span class="meta-label">Ảnh bìa</span>
+                                <div class="meta-value" th:text="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)} ? 'Đã có ảnh' : 'Chưa có ảnh'">Đã có ảnh</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="meta-card h-100">
+                                <span class="meta-label">Mô tả</span>
+                                <div class="meta-value" th:text="${book.description != null and !#strings.isEmpty(book.description)} ? 'Đã có nội dung' : 'Chưa có nội dung'">Đã có nội dung</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-panel" sec:authorize="hasAuthority('ADMIN')">
+                    <h3>Thao tác quản trị</h3>
+                    <div class="admin-actions">
+                        <a class="btn btn-primary" th:href="@{/books/edit/{id}(id=${book.id})}">Chỉnh sửa sách</a>
+                        <a class="btn btn-danger"
+                           th:href="@{/books/delete/{id}(id=${book.id})}"
+                           onclick="return confirm('Bạn có chắc muốn xóa sách này?')">Xóa sách</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+</body>
+</html>

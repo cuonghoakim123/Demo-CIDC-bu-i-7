@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - Hiệu sách HUTECH</title>
+
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+
+    <style>
+        @media (min-width: 992px) {
+            .order-sidebar {
+                position: sticky;
+                top: 1.5rem;
+            }
+        }
+
+        .order-sidebar {
+            display: grid;
+            gap: 1.5rem;
+            align-self: start;
+        }
+    </style>
+</head>
+
+<body class="site-shell d-flex flex-column min-vh-100">
+
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-fill page-shell">
+
+<div class="container">
+    <div class="headline-block mb-4">
+        <div>
+            <div class="eyebrow eyebrow-dark mb-3">Chi tiết đơn hàng</div>
+            <h1 class="section-title">Xem đầy đủ thông tin đơn mua</h1>
+            <p class="section-lead mt-3 mb-0">Theo dõi tiến độ, xem từng đầu sách đã đặt và xác nhận thông tin khách hàng gắn với hóa đơn này.</p>
+        </div>
+        <nav aria-label="đường dẫn điều hướng">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/orders">Đơn hàng của tôi</a></li>
+                <li class="breadcrumb-item active">Chi tiết đơn hàng</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="detail-hero mb-4">
+                <div class="row g-4 align-items-start">
+                    <div class="col-md-7">
+                        <div class="eyebrow eyebrow-dark mb-3">Tóm tắt hóa đơn</div>
+                        <h2 class="detail-title mb-3" th:text="${order.orderNumber}">ORD-123456</h2>
+                        <div class="info-stack">
+                            <div class="info-row">
+                                <span class="meta-label mb-0">Ngày đặt</span>
+                                <strong th:text="${#dates.format(order.invoiceDate, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:30</strong>
+                            </div>
+                            <div class="info-row">
+                                <span class="meta-label mb-0">Phương thức thanh toán</span>
+                                <strong th:text="${paymentLabels[order.paymentMethod] != null ? paymentLabels[order.paymentMethod] : order.paymentMethod}">Thanh toán khi nhận hàng</strong>
+                            </div>
+                            <div class="info-row">
+                                <span class="meta-label mb-0">Địa chỉ giao hàng</span>
+                                <strong class="text-end" th:text="${order.shippingAddress}">123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="summary-card compact h-100">
+                            <span class="meta-label">Trạng thái hiện tại</span>
+                            <div class="mt-2 mb-3">
+                                <span class="status-pill"
+                                      th:classappend="${order.status == 'PENDING' ? 'pending' : order.status == 'PROCESSING' ? 'processing' : order.status == 'SHIPPED' ? 'shipped' : order.status == 'DELIVERED' ? 'delivered' : 'cancelled'}"
+                                      th:text="${statusLabels[order.status] != null ? statusLabels[order.status] : order.status}">Chờ xử lý</span>
+                            </div>
+                            <div class="summary-total">
+                                <span class="meta-label mb-2">Tổng thanh toán</span>
+                                <div class="price-display" th:text="'$' + ${#numbers.formatDecimal(order.price, 0, 2)}">$99.99</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-shell">
+                <div class="headline-block mb-3">
+                    <div>
+                        <h3 class="mb-1">Sách đã đặt</h3>
+                        <p class="muted-copy mb-0">Mỗi dòng dưới đây thuộc về hóa đơn này.</p>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Sách</th>
+                                <th>Giá</th>
+                                <th>Số lượng</th>
+                                <th>Tạm tính</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${order.itemInvoices}">
+                                <td>
+                                    <strong class="d-block" th:text="${item.book.title}">Tên sách</strong>
+                                    <span class="meta-label mb-0" th:text="${item.book.author}">Tác giả</span>
+                                </td>
+                                <td th:text="'$' + ${#numbers.formatDecimal(item.book.price, 0, 2)}">$19.99</td>
+                                <td th:text="${item.quantity}">1</td>
+                                <td><strong class="price-tag" th:text="'$' + ${#numbers.formatDecimal(item.book.price * item.quantity, 0, 2)}">$19.99</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="order-sidebar">
+            <div class="summary-card compact mb-0">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="eyebrow eyebrow-dark mb-2">Khách hàng</div>
+                        <h3 class="mb-1">Thông tin liên hệ</h3>
+                    </div>
+                    <div class="icon-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-person-badge" viewBox="0 0 16 16">
+                            <path d="M6.5 2a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 11.037A4.995 4.995 0 0 1 8 13a4.995 4.995 0 0 1 4.273 2.107A7.001 7.001 0 0 0 9 4.07V3h.5a.5.5 0 0 0 0-1h-3Z"/>
+                            <path d="M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0ZM8 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="info-stack">
+                    <div class="info-row">
+                        <span class="meta-label mb-0">Họ tên</span>
+                        <strong th:text="${order.customerName}">John Doe</strong>
+                    </div>
+                    <div class="info-row">
+                        <span class="meta-label mb-0">Số điện thoại</span>
+                        <strong th:text="${order.customerPhone}">123-456-7890</strong>
+                    </div>
+                    <div class="info-row">
+                        <span class="meta-label mb-0">Email</span>
+                        <strong class="text-end" th:text="${order.customerEmail}">john@example.com</strong>
+                    </div>
+                </div>
+                <a href="/orders" class="btn btn-outline-primary w-100 mt-4">Quay lại đơn hàng</a>
+            </div>
+
+            <div class="summary-card compact">
+                <div class="eyebrow eyebrow-dark mb-3">Tiến trình</div>
+                <h3 class="mb-3">Tiến độ đơn hàng</h3>
+                <div class="order-timeline">
+                    <div class="timeline-item" th:classappend="${order.status == 'PENDING' or order.status == 'PROCESSING' or order.status == 'SHIPPED' or order.status == 'DELIVERED' ? ' active' : ''}">
+                        <div class="timeline-marker"></div>
+                        <div>
+                            <h6 class="mb-1">Đã đặt hàng</h6>
+                            <small class="text-muted">Đơn mua đã được tiếp nhận thành công.</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item" th:classappend="${order.status == 'PROCESSING' or order.status == 'SHIPPED' or order.status == 'DELIVERED' ? ' active' : ''}">
+                        <div class="timeline-marker"></div>
+                        <div>
+                            <h6 class="mb-1">Đang xử lý</h6>
+                            <small class="text-muted">Sách đang được chuẩn bị và đóng gói.</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item" th:classappend="${order.status == 'SHIPPED' or order.status == 'DELIVERED' ? ' active' : ''}">
+                        <div class="timeline-marker"></div>
+                        <div>
+                            <h6 class="mb-1">Đang giao</h6>
+                            <small class="text-muted">Đơn hàng đang trên đường tới khách hàng.</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item" th:classappend="${order.status == 'DELIVERED' ? ' active' : ''}">
+                        <div class="timeline-marker"></div>
+                        <div>
+                            <h6 class="mb-1">Đã giao</h6>
+                            <small class="text-muted">Đơn hàng đã hoàn tất thành công.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng - Quản trị</title>
+
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+</head>
+
+<body class="site-shell d-flex flex-column min-vh-100">
+
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-fill page-shell">
+
+<div class="container">
+    <div class="headline-block mb-4">
+        <div>
+            <div class="eyebrow eyebrow-dark mb-3">Đơn hàng quản trị</div>
+            <h1 class="section-title">Theo dõi và cập nhật mọi đơn hàng</h1>
+            <p class="section-lead mt-3 mb-0">Xem trạng thái xử lý, kiểm tra thông tin khách hàng và cập nhật tiến độ giao hàng ngay trên một bảng.</p>
+        </div>
+        <nav aria-label="đường dẫn điều hướng">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/dashboard">Bảng điều khiển</a></li>
+                <li class="breadcrumb-item active">Tất cả đơn hàng</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="metric-grid mb-4">
+        <div class="metric-card highlight">
+            <span class="metric-label">Chờ xử lý</span>
+            <div class="d-flex justify-content-between align-items-end gap-3">
+                <strong class="metric-value" th:text="${pendingCount}">0</strong>
+                <span>Cần xác nhận</span>
+            </div>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Đang xử lý</span>
+            <div class="d-flex justify-content-between align-items-end gap-3">
+                <strong class="metric-value" th:text="${processingCount}">0</strong>
+                <span>Đang chuẩn bị giao</span>
+            </div>
+        </div>
+        <div class="metric-card primary">
+            <span class="metric-label">Đang giao</span>
+            <div class="d-flex justify-content-between align-items-end gap-3">
+                <strong class="metric-value" th:text="${shippedCount}">0</strong>
+                <span>Đang vận chuyển</span>
+            </div>
+        </div>
+        <div class="metric-card accent">
+            <span class="metric-label">Đã giao</span>
+            <div class="d-flex justify-content-between align-items-end gap-3">
+                <strong class="metric-value" th:text="${deliveredCount}">0</strong>
+                <span>Đơn hàng hoàn tất</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-shell">
+        <div class="admin-toolbar mb-3">
+            <div>
+                <div class="eyebrow eyebrow-dark mb-2">Hàng đợi trực tiếp</div>
+                <h3 class="mb-1">Tất cả đơn hàng</h3>
+                <p class="muted-copy mb-0"><span th:text="${#lists.size(orders)}">0</span> đơn hàng hiện có trong hệ thống.</p>
+            </div>
+            <a href="/dashboard" class="btn btn-outline-primary">Quay lại bảng điều khiển</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Đơn hàng</th>
+                        <th>Khách hàng</th>
+                        <th>Ngày</th>
+                        <th>Sản phẩm</th>
+                        <th>Tổng tiền</th>
+                        <th>Thanh toán</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${orders}">
+                        <td>
+                            <strong class="d-block" th:text="${order.orderNumber}">ORD-123</strong>
+                            <span class="meta-label mb-0">Mã hóa đơn <span th:text="${order.id}">1</span></span>
+                        </td>
+                        <td>
+                            <strong class="d-block" th:text="${order.customerName}">John Doe</strong>
+                            <span class="text-muted d-block" th:text="${order.customerPhone}">123-456-7890</span>
+                            <small class="text-muted" th:text="${order.customerEmail}">john@example.com</small>
+                        </td>
+                        <td th:text="${#dates.format(order.invoiceDate, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
+                        <td><span th:text="${#lists.size(order.itemInvoices)}">3</span> sản phẩm</td>
+                        <td><strong class="price-tag" th:text="'$' + ${#numbers.formatDecimal(order.price, 0, 2)}">$99.99</strong></td>
+                        <td><span class="soft-pill" th:text="${paymentLabels[order.paymentMethod] != null ? paymentLabels[order.paymentMethod] : order.paymentMethod}">Thanh toán khi nhận hàng</span></td>
+                        <td>
+                            <form th:action="@{/orders/admin/update-status/{id}(id=${order.id})}" method="post">
+                                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="PENDING" th:selected="${order.status == 'PENDING'}">Chờ xử lý</option>
+                                    <option value="PROCESSING" th:selected="${order.status == 'PROCESSING'}">Đang xử lý</option>
+                                    <option value="SHIPPED" th:selected="${order.status == 'SHIPPED'}">Đang giao</option>
+                                    <option value="DELIVERED" th:selected="${order.status == 'DELIVERED'}">Đã giao</option>
+                                    <option value="CANCELLED" th:selected="${order.status == 'CANCELLED'}">Đã hủy</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a th:href="@{/orders/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">Xem</a>
+                                <a th:href="@{/orders/admin/delete/{id}(id=${order.id})}"
+                                   class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Bạn có chắc muốn xóa đơn hàng này?')">Xóa</a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="8" class="text-center py-5">
+                            <div class="empty-state border-0 shadow-none bg-transparent p-0">
+                                <div class="icon-badge mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16">
+                                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                                    </svg>
+                                </div>
+                                <h4 class="mb-2">Không tìm thấy đơn hàng</h4>
+                                <p class="muted-copy mb-0">Đơn hàng mới của khách sẽ xuất hiện ở đây ngay sau khi thanh toán hoàn tất.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+</body>
+</html>

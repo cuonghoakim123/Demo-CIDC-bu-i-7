@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Danh sách sách</title>
+
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::custom-css}"></th:block>
+</head>
+
+<body class="site-shell d-flex flex-column min-vh-100">
+
+<th:block th:replace="~{layout::header}"></th:block>
+
+<main class="flex-fill page-shell">
+    <div class="container">
+        <div class="section-panel mb-4">
+            <div class="catalog-toolbar">
+                <div>
+                    <span class="eyebrow eyebrow-dark mb-2">Danh mục sách</span>
+                    <h1 class="section-title">Bộ sưu tập sách</h1>
+                    <p class="section-lead mb-0">Tìm sách theo tiêu đề, tác giả và truy cập nhanh vào chi tiết, chỉnh sửa hoặc mua hàng.</p>
+                </div>
+                <a class="btn btn-accent" th:href="@{/books/add}" sec:authorize="hasAuthority('ADMIN')">Thêm sách mới</a>
+            </div>
+            <div class="stats-grid mt-4">
+                <div class="mini-stat surface-panel compact">
+                    <span>Số sách hiển thị</span>
+                    <strong th:text="${#lists.size(books)}">0</strong>
+                </div>
+                <div class="mini-stat surface-panel compact">
+                    <span>Danh mục</span>
+                    <strong th:text="${#lists.size(categories)}">0</strong>
+                </div>
+                <div class="mini-stat surface-panel compact">
+                    <span>Kiểu sắp xếp</span>
+                    <strong>Danh sách thông minh</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-panel mb-4">
+            <div class="order-toolbar">
+                <form class="search-form" th:action="@{/books/search}" method="get">
+                    <input class="form-control" type="search" placeholder="Tìm sách theo tiêu đề hoặc tác giả..." aria-label="Tìm kiếm" name="keyword">
+                    <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+                </form>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-outline-primary" th:href="@{/books(pageNo=${currentPage}, sortBy='title')}">Sắp xếp theo tên</a>
+                    <a class="btn btn-outline-primary" th:href="@{/books(pageNo=${currentPage}, sortBy='price')}">Sắp xếp theo giá</a>
+                    <a class="btn btn-outline-primary" th:href="@{/books(pageNo=${currentPage}, sortBy='category')}">Sắp xếp theo danh mục</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4" th:if="${not #lists.isEmpty(books)}">
+            <div class="col-sm-6 col-xl-3" th:each="book : ${books}">
+                <div class="book-grid-card">
+                    <div class="book-cover-wrap">
+                        <img th:if="${book.imageUrl != null}" th:src="${book.imageUrl}" th:alt="${book.title}" onerror="this.onerror=null;this.src='/image/1.png';">
+                        <div th:if="${book.imageUrl == null}" class="book-cover-placeholder">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" fill="currentColor" class="bi bi-book" viewBox="0 0 16 16">
+                                <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                            <span class="category-pill" th:text="${categoryLabels[book.getCategory().getName()] != null ? categoryLabels[book.getCategory().getName()] : book.getCategory().getName()}">Danh mục</span>
+                            <span class="soft-pill">#<span th:text="${book.getId()}">1</span></span>
+                        </div>
+                        <h5 class="mb-1" th:text="${book.getTitle()}">Tên sách</h5>
+                        <p class="muted-copy mb-2">Tác giả: <strong th:text="${book.getAuthor()}">Tác giả</strong></p>
+                        <div class="price-tag fs-4 mb-3" th:text="'$' + ${#numbers.formatDecimal(book.getPrice(), 0, 2)}">$0.00</div>
+                        <div class="stack-actions mt-auto">
+                            <a class="btn btn-outline-primary w-100" th:href="@{/books/{id}(id=${book.getId()})}">Chi tiết</a>
+                            <a class="btn btn-primary w-100" th:href="@{/books/edit/{id}(id=${book.getId()})}" sec:authorize="hasAuthority('ADMIN')">Chỉnh sửa</a>
+                            <a class="btn btn-outline-danger w-100" th:href="@{/books/delete/{id}(id=${book.getId()})}" onclick="return confirm('Bạn có chắc muốn xóa sách này?')" sec:authorize="hasAuthority('ADMIN')">Xóa</a>
+                            <form th:action="@{/books/add-to-cart}" method="post" sec:authorize="hasAnyAuthority('ADMIN', 'USER')">
+                                <input type="hidden" name="id" th:value="${book.getId()}">
+                                <input type="hidden" name="name" th:value="${book.getTitle()}">
+                                <input type="hidden" name="price" th:value="${book.getPrice()}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-accent w-100">Thêm vào giỏ</button>
+                            </form>
+                            <a class="btn btn-secondary w-100" href="/login" sec:authorize="!isAuthenticated()">Đăng nhập để mua</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(books)}">
+            <span class="icon-badge mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                </svg>
+            </span>
+            <h4 class="mb-2">Không tìm thấy sách</h4>
+            <p class="muted-copy mb-0">Hãy thử từ khóa khác hoặc thêm sách mới nếu bạn đang ở vai trò quản trị.</p>
+        </div>
+
+        <nav aria-label="điều hướng trang" class="mt-4" th:if="${totalPages >= 0}">
+            <ul class="pagination justify-content-center pagination-sm">
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages)}" th:classappend="${currentPage == i} ? 'active'">
+                    <a class="page-link" th:href="@{/books(pageNo=${i})}" th:text="${i + 1}"></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+
+<th:block th:replace="~{layout::footer}"></th:block>
+
+</body>
+</html>

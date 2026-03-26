@@ -1,0 +1,56 @@
+API Endpoints - Direct Browser Access
+
+=== PUBLIC API (No Authentication Required) ===
+
+GET All Books:
+http://localhost:8080/api/v1/books
+
+GET Book by ID:
+http://localhost:8080/api/v1/books/1
+http://localhost:8080/api/v1/books/3
+
+Search Books:
+http://localhost:8080/api/v1/books/search?keyword=java
+
+Note: 
+- No login required, direct access
+- Results display as JSON in browser
+- POST/PUT/DELETE require Postman or cURL
+
+=== WEB ROUTES (Authentication Required) ===
+
+User Routes:
+- GET /books - View all books
+- GET /books/{id} - View book details
+- GET /cart - View shopping cart
+- POST /cart/add/{id} - Add book to cart
+- GET /cart/checkout - Checkout page
+- POST /cart/checkout - Process order
+- GET /orders - View my order history
+- GET /orders/{id} - View order details
+
+Admin Routes:
+- GET /dashboard - Admin dashboard
+- GET /books/add - Add new book form
+- POST /books/add - Create new book
+- GET /books/edit/{id} - Edit book form
+- POST /books/edit/{id} - Update book
+- GET /books/delete/{id} - Delete book
+- GET /orders/admin/all - View all orders
+- POST /orders/admin/update-status/{id} - Update order status
+
+=== CREDENTIALS ===
+
+Admin Account:
+- Username: hutech
+- Password: hutech123
+
+Regular users can register at: http://localhost:8080/register
+
+=== ORDER STATUS FLOW ===
+
+PENDING → PROCESSING → SHIPPED → DELIVERED
+                    ↓
+                CANCELLED
+
+Admin can update order status from the order management page.
