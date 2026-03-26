@@ -1,9 +1,19 @@
 name: Build and Push Docker Image
 
+run-name: Docker Deploy - ${{ github.ref_name }} @ ${{ github.sha }}
+
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency:
+  group: docker-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: spring-app
 
 jobs:
   docker:
@@ -28,7 +38,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/spring-app
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-
@@ -38,6 +48,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
