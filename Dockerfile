@@ -12,5 +12,5 @@ WORKDIR /app
 
 COPY --from=builder /app/target/spring-app-1.0.0.jar app.jar
 
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+EXPOSE 80
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${SERVER_PORT:-80} -jar /app/app.jar"]
