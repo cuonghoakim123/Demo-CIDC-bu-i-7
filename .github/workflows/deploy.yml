@@ -62,6 +62,10 @@ jobs:
           REPO="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
           CONTAINER_PORT=80
           DEPLOY_URL=$(echo "${{ env.DEPLOY_URL }}" | tr -d '\r' | xargs)
+          DEPLOY_URL=${DEPLOY_URL%\"}
+          DEPLOY_URL=${DEPLOY_URL#\"}
+          DEPLOY_URL=${DEPLOY_URL%\'}
+          DEPLOY_URL=${DEPLOY_URL#\'}
           if [[ -z "$DEPLOY_URL" ]]; then
             echo "DEPLOY_URL dang rong. Hay cap nhat secret DEPLOY_URL trong GitHub."
             exit 1
@@ -70,6 +74,8 @@ jobs:
             DEPLOY_URL="http://$DEPLOY_URL"
             echo "DEPLOY_URL thieu giao thuc, da tu them http://"
           fi
+          DEPLOY_HOST=$(echo "$DEPLOY_URL" | sed -E 's#^https?://([^/]+).*$#\1#')
+          echo "Deploy host: $DEPLOY_HOST | slot=4 | repo=$REPO | tag=latest | container_port=$CONTAINER_PORT"
           set +e
           RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST \
             --get "$DEPLOY_URL" \
