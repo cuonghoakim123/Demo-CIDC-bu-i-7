@@ -56,9 +56,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger iThutech deploy webhook (optional)
+      - name: Trien khai len DevOps Classroom (S4)
         if: ${{ env.DEPLOY_URL != '' }}
         run: |
-          curl --fail --show-error --silent \
-            --request POST \
-            "${{ env.DEPLOY_URL }}"
+          REPO="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          CONTAINER_PORT=80
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ env.DEPLOY_URL }}?repo=$REPO&tag=latest&slot=4&container_port=$CONTAINER_PORT&strict_container_port=0")
+          BODY=$(echo "$RESPONSE" | sed "$d")
+          CODE=$(echo "$RESPONSE" | tail -n1)
+          echo "Webhook HTTP: $CODE"
+          if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
+            echo "Deploy that bai. Xem chi tiet trong nhom log ben duoi."
+            echo "::group::Chi tiet webhook JSON"
+            echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+            echo "::endgroup::"
+            exit 1
+          fi
+          echo "Deploy thanh cong."
+          echo "::group::Chi tiet webhook JSON"
+          echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+          echo "::endgroup::"
