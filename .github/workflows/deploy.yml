@@ -13,18 +13,46 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: spring-app
+  # Image hien thi tren server: cuonghoakim123/diamond:latest
+  DOCKER_IMAGE: cuonghoakim123/diamond
   DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
 
 jobs:
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+
+      - name: Kiem tra secret Docker Hub (push len cuonghoakim123/diamond)
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
+            echo "::error::Thieu GitHub secret DOCKERHUB_USERNAME"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "::error::Thieu GitHub secret DOCKERHUB_TOKEN (PAT Docker Hub)"
+            exit 1
+          fi
+          if [ "${{ secrets.DOCKERHUB_USERNAME }}" != "cuonghoakim123" ]; then
+            echo "::error::DOCKERHUB_USERNAME phai la cuonghoakim123 de push image ${{ env.DOCKER_IMAGE }}"
+            exit 1
+          fi
+          echo "OK: se push va deploy ${{ env.DOCKER_IMAGE }}:latest len S4."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Maven package (giong Dockerfile, bat loi som truoc khi dong image)
+        run: mvn -B clean package -DskipTests
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -39,12 +67,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.DOCKER_IMAGE }}
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (${{ env.DOCKER_IMAGE }})
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -53,13 +81,24 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          sbom: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Cho Docker Hub cap nhat tag (tranh slot pull image cu/404)
+        if: ${{ env.DEPLOY_URL != '' }}
+        run: |
+          echo "Doi 25 giay de Docker Hub san sang cho tag latest..."
+          sleep 25
+
+      # Giong generator Classroom: repo = namespace/name (KHONG kem :latest), tag = latest rieng.
       - name: Triển khai lên DevOps Classroom (S4)
         if: ${{ env.DEPLOY_URL != '' }}
         run: |
-          REPO="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          REPO="${{ env.DOCKER_IMAGE }}"
+          TAG="latest"
+          SLOT=4
           CONTAINER_PORT=80
           DEPLOY_URL=$(echo "${{ env.DEPLOY_URL }}" | tr -d '\r' | xargs)
           DEPLOY_URL=${DEPLOY_URL%\"}
@@ -67,44 +106,48 @@ jobs:
           DEPLOY_URL=${DEPLOY_URL%\'}
           DEPLOY_URL=${DEPLOY_URL#\'}
           if [[ -z "$DEPLOY_URL" ]]; then
-            echo "DEPLOY_URL dang rong. Hay cap nhat secret DEPLOY_URL trong GitHub."
+            echo "DEPLOY_URL dang rong. Hay cap nhat secret DEPLOY_URL (Settings -> Secrets -> Actions)."
             exit 1
           fi
           if [[ ! "$DEPLOY_URL" =~ ^https?:// ]]; then
             DEPLOY_URL="http://$DEPLOY_URL"
-            echo "DEPLOY_URL thieu giao thuc, da tu them http://"
           fi
-          DEPLOY_HOST=$(echo "$DEPLOY_URL" | sed -E 's#^https?://([^/]+).*$#\1#')
-          echo "Deploy host: $DEPLOY_HOST | slot=4 | repo=$REPO | tag=latest | container_port=$CONTAINER_PORT"
+          echo "Deploy S4: repo=${REPO} tag=${TAG} slot=${SLOT} container_port=${CONTAINER_PORT}"
+          echo "(Dung dang cuonghoakim123/diamond + tag latest — KHONG ghi :latest vao bien REPO)"
+
           set +e
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST \
-            --get "$DEPLOY_URL" \
-            --data-urlencode "repo=$REPO" \
-            --data-urlencode "tag=latest" \
-            --data-urlencode "slot=4" \
-            --data-urlencode "container_port=$CONTAINER_PORT" \
-            --data-urlencode "strict_container_port=0" 2>&1)
+          RESPONSE=$(curl -sS \
+            --connect-timeout 20 \
+            --max-time 180 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            -w $'\n%{http_code}' \
+            -X POST \
+            "${DEPLOY_URL}?repo=${REPO}&tag=${TAG}&slot=${SLOT}&container_port=${CONTAINER_PORT}&strict_container_port=0" 2>&1)
           CURL_EXIT=$?
-          set -e
           if [ "$CURL_EXIT" -ne 0 ]; then
-            echo "curl loi, ma thoat: $CURL_EXIT"
+            echo "curl loi mang/timeout, ma thoat: $CURL_EXIT"
             echo "$RESPONSE"
             exit 1
           fi
-          BODY=$(echo "$RESPONSE" | sed "$d")
-          CODE=$(echo "$RESPONSE" | tail -n1)
-          echo "Webhook HTTP: $CODE"
 
-      - name: Triển khai lên DevOps Classroom (S8)
-        run: |
-          REPO="cuonghoakim123/diamond"
-          CONTAINER_PORT=80
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ secrets.DEPLOY_URL }}?repo=$REPO&tag=latest&slot=8&container_port=$CONTAINER_PORT&strict_container_port=0")
-          BODY=$(echo "$RESPONSE" | sed "$d")
           CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          if ! [[ "$CODE" =~ ^[0-9]{3}$ ]]; then
+            echo "Khong doc duoc HTTP code tu webhook response"
+            echo "$RESPONSE"
+            exit 1
+          fi
           echo "Webhook HTTP: $CODE"
           if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
-            echo "Deploy thất bại."
+            echo "Deploy thất bại. Xem chi tiết trong nhóm log bên dưới."
+            echo "::group::Chi tiết webhook JSON"
+            echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+            echo "::endgroup::"
             exit 1
           fi
           echo "Deploy thành công."
+          echo "::group::Chi tiết webhook JSON"
+          echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+          echo "::endgroup::"
