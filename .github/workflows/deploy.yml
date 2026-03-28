@@ -61,9 +61,33 @@ jobs:
         run: |
           REPO="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
           CONTAINER_PORT=80
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ env.DEPLOY_URL }}?repo=$REPO&tag=latest&slot=4&container_port=$CONTAINER_PORT&strict_container_port=0")
+          DEPLOY_URL="${{ env.DEPLOY_URL }}"
+          if [[ ! "$DEPLOY_URL" =~ ^https?:// ]]; then
+            echo "DEPLOY_URL khong hop le. Secret DEPLOY_URL can bat dau bang http:// hoac https://"
+            exit 1
+          fi
+          set +e
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST \
+            --get "$DEPLOY_URL" \
+            --data-urlencode "repo=$REPO" \
+            --data-urlencode "tag=latest" \
+            --data-urlencode "slot=4" \
+            --data-urlencode "container_port=$CONTAINER_PORT" \
+            --data-urlencode "strict_container_port=0" 2>&1)
+          CURL_EXIT=$?
+          set -e
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "curl loi, ma thoat: $CURL_EXIT"
+            echo "$RESPONSE"
+            exit 1
+          fi
           BODY=$(echo "$RESPONSE" | sed "$d")
           CODE=$(echo "$RESPONSE" | tail -n1)
+          if ! [[ "$CODE" =~ ^[0-9]{3}$ ]]; then
+            echo "Khong doc duoc HTTP code tu webhook response"
+            echo "$RESPONSE"
+            exit 1
+          fi
           echo "Webhook HTTP: $CODE"
           if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
             echo "Deploy that bai. Xem chi tiet trong nhom log ben duoi."
