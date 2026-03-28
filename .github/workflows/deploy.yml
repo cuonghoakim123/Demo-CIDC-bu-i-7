@@ -14,6 +14,7 @@ concurrency:
 
 env:
   IMAGE_NAME: spring-app
+  DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
 
 jobs:
   docker:
@@ -56,8 +57,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger iThutech deploy webhook (optional)
-        if: ${{ secrets.DEPLOY_URL != '' }}
+        if: ${{ env.DEPLOY_URL != '' }}
         run: |
           curl --fail --show-error --silent \
             --request POST \
-            "${{ secrets.DEPLOY_URL }}"
+            "${{ env.DEPLOY_URL }}"
