@@ -61,10 +61,14 @@ jobs:
         run: |
           REPO="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
           CONTAINER_PORT=80
-          DEPLOY_URL="${{ env.DEPLOY_URL }}"
-          if [[ ! "$DEPLOY_URL" =~ ^https?:// ]]; then
-            echo "DEPLOY_URL khong hop le. Secret DEPLOY_URL can bat dau bang http:// hoac https://"
+          DEPLOY_URL=$(echo "${{ env.DEPLOY_URL }}" | tr -d '\r' | xargs)
+          if [[ -z "$DEPLOY_URL" ]]; then
+            echo "DEPLOY_URL dang rong. Hay cap nhat secret DEPLOY_URL trong GitHub."
             exit 1
+          fi
+          if [[ ! "$DEPLOY_URL" =~ ^https?:// ]]; then
+            DEPLOY_URL="http://$DEPLOY_URL"
+            echo "DEPLOY_URL thieu giao thuc, da tu them http://"
           fi
           set +e
           RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST \
